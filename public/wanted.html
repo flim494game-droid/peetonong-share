@@ -6,20 +6,34 @@
   <title>ตามหา Hardware — ของพี่ดีต่อน้อง</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="js/auth-check.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
 
   <!-- Header -->
   <header class="bg-indigo-600 text-white shadow-md">
-    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-      <div class="flex items-center gap-6">
-        <a href="index.html" class="text-2xl font-bold tracking-wide">📦 ของพี่ดีต่อน้อง</a>
-        <nav class="hidden md:flex gap-4 text-sm font-semibold">
-          <a href="index.html" class="hover:text-indigo-200">รายการส่งต่อ</a>
-          <a href="wanted.html" class="text-amber-300 font-bold underline">🔍 บอร์ดตามหาของ</a>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
+      <!-- โลโก้ และ เมนูนำทาง -->
+      <div class="flex items-center gap-8">
+        <a href="index.html" class="flex items-center gap-2.5 group">
+          <span class="text-2xl transform group-hover:scale-110 transition-transform duration-200">📦</span>
+          <span class="text-xl font-extrabold tracking-tight text-white group-hover:text-amber-300 transition-colors">
+            ของพี่ดีต่อน้อง
+          </span>
+        </a>
+
+        <nav class="hidden md:flex items-center gap-2 text-sm font-medium">
+          <a href="index.html"class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-indigo-100 hover:bg-indigo-500/50 hover:text-white transition">
+            <span>🎁</span> รายการส่งต่อ
+          </a>
+          <a href="wanted.html" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-700/60 text-amber-300 font-bold shadow-inner border border-indigo-400/30 transition">
+            <span>🔍</span> บอร์ดตามหาของ
+          </a>
         </nav>
       </div>
-      <div id="userNavInfo"></div>
+
+      <!-- ส่วนแสดงข้อมูลผู้ใช้งาน / ปุ่มล็อกอิน -->
+      <div id="userNavInfo" class="flex items-center gap-3"></div>
     </div>
   </header>
 

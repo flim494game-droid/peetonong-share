@@ -1,8 +1,8 @@
-// public/js/post.js
 document.getElementById('postForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const token = localStorage.getItem('token'); // ดึง Token จาก localStorage
+  const token = localStorage.getItem('token');
+  const contactInput = document.getElementById('contactInfo');
 
   const payload = {
     title: document.getElementById('title').value,
@@ -13,7 +13,7 @@ document.getElementById('postForm').addEventListener('submit', async (e) => {
     description: document.getElementById('description').value,
     giver: {
       name: document.getElementById('giverName').value,
-      contactInfo: document.getElementById('giverName').value
+      contactInfo: contactInput ? contactInput.value : document.getElementById('giverName').value
     }
   };
 
@@ -22,20 +22,37 @@ document.getElementById('postForm').addEventListener('submit', async (e) => {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` // [HIGHLIGHT] แนบ Token ใน Header
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(payload)
     });
 
     const data = await res.json();
     if (res.ok && data.success) {
-      alert('ลงประกาศสำเร็จ!');
-      window.location.href = 'index.html';
+      Swal.fire({
+        icon: 'success',
+        title: 'ลงประกาศสำเร็จ!',
+        text: 'ระบบได้บันทึกรายการอุปกรณ์ของคุณเรียบร้อยแล้ว',
+        timer: 1500,
+        showConfirmButton: false
+      }).then(() => {
+        window.location.href = 'index.html';
+      });
     } else {
-      alert(data.error || 'เกิดข้อผิดพลาดในการลงประกาศ');
+      Swal.fire({
+        icon: 'error',
+        title: 'ลงประกาศไม่สำเร็จ',
+        text: data.error || 'เกิดข้อผิดพลาดในการลงประกาศ',
+        confirmButtonColor: '#4f46e5'
+      });
     }
   } catch (err) {
-    alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
     console.error(err);
+    Swal.fire({
+      icon: 'error',
+      title: 'เกิดข้อผิดพลาด',
+      text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้',
+      confirmButtonColor: '#4f46e5'
+    });
   }
 });

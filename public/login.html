@@ -5,13 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>เข้าสู่ระบบ — ของพี่ดีต่อน้อง</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- SweetAlert2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
 
   <div class="bg-white p-8 rounded-xl shadow-md border max-w-md w-full">
     <div class="text-center mb-6">
       <h1 class="text-2xl font-bold text-indigo-700">📦 ของพี่ดีต่อน้อง</h1>
-      <p class="text-xs text-gray-500 mt-1">เฉพาะนักศึกษา/บุคลากรที่ใช้อีเมล @rmutsvmail.com</p>
+      <p class="text-xs text-gray-500 mt-1">เฉพาะนักศึกษา/บุคลากรที่ใช้อีเมล @rmutsvmail.com หรือ @rmutsv.ac.th</p>
     </div>
 
     <!-- แถบสลับ ระหว่าง Login / Register -->
@@ -24,13 +26,13 @@
     <form id="loginForm" class="space-y-4">
       <div>
         <label class="block text-sm font-semibold mb-1">อีเมลวิทยาลัย</label>
-        <input type="email" id="loginEmail" required class="w-full border p-2.5 rounded-lg text-sm">
+        <input type="email" id="loginEmail" required placeholder="student@rmutsvmail.com" class="w-full border p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400">
       </div>
       <div>
         <label class="block text-sm font-semibold mb-1">รหัสผ่าน</label>
-        <input type="password" id="loginPassword" required class="w-full border p-2.5 rounded-lg text-sm">
+        <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full border p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400">
       </div>
-      <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg">
+      <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg transition-colors">
         เข้าสู่ระบบ
       </button>
     </form>
@@ -39,28 +41,21 @@
     <form id="registerForm" class="space-y-4 hidden">
       <div>
         <label class="block text-sm font-semibold mb-1">ชื่อ-นามสกุล / ชื่อเล่นและรุ่น</label>
-        <input type="text" id="regFullname" required class="w-full border p-2.5 rounded-lg text-sm">
+        <input type="text" id="regFullname" required placeholder="สมชาย สายโค้ด (รุ่น 66)" class="w-full border p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-green-400">
       </div>
       <div>
         <label class="block text-sm font-semibold mb-1">อีเมลวิทยาลัย (@rmutsvmail.com)</label>
-        <input type="email" id="regEmail" required class="w-full border p-2.5 rounded-lg text-sm">
+        <input type="email" id="regEmail" required placeholder="student@rmutsvmail.com" class="w-full border p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-green-400">
       </div>
       <div>
         <label class="block text-sm font-semibold mb-1">รหัสผ่าน</label>
-        <input type="password" id="regPassword" required class="w-full border p-2.5 rounded-lg text-sm">
+        <input type="password" id="regPassword" required placeholder="อย่างน้อย 6 ตัวอักษร" class="w-full border p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-green-400">
       </div>
-      <!-- ช่องยืนยันรหัสผ่าน -->
       <div>
         <label class="block text-sm font-semibold text-gray-700 mb-1">ยืนยันรหัสผ่านอีกครั้ง</label>
-        <input 
-          type="password" 
-          id="regConfirmPassword" 
-          required 
-          placeholder="กรอกรหัสผ่านซ้ำอีกครั้ง"
-          class="w-full border p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400"
-        >
+        <input type="password" id="regConfirmPassword" required placeholder="กรอกรหัสผ่านซ้ำอีกครั้ง" class="w-full border p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-green-400">
       </div>
-      <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-lg">
+      <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-lg transition-colors">
         ยืนยันลงทะเบียน
       </button>
     </form>
@@ -87,20 +82,42 @@
       const email = document.getElementById('loginEmail').value;
       const password = document.getElementById('loginPassword').value;
 
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
 
-      if (data.success) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        alert('เข้าสู่ระบบสำเร็จ!');
-        window.location.href = 'index.html';
-      } else {
-        alert(data.error);
+        if (data.success) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+
+          Swal.fire({
+            icon: 'success',
+            title: 'เข้าสู่ระบบสำเร็จ!',
+            text: 'กำลังนำคุณไปยังหน้าหลัก...',
+            timer: 1500,
+            showConfirmButton: false
+          }).then(() => {
+            window.location.href = 'index.html';
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'เข้าสู่ระบบไม่สำเร็จ',
+            text: data.error || 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+            confirmButtonColor: '#4f46e5'
+          });
+        }
+      } catch (err) {
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด',
+          text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้',
+          confirmButtonColor: '#4f46e5'
+        });
       }
     });
 
@@ -112,25 +129,49 @@
       const password = document.getElementById('regPassword').value;
       const confirmPassword = document.getElementById('regConfirmPassword').value;
 
-      // [อัปเดตใหม่] ตรวจสอบรหัสผ่านตรงกันเบื้องต้นก่อนยิง API
+      // ตรวจสอบรหัสผ่านตรงกันเบื้องต้น
       if (password !== confirmPassword) {
-        alert('⚠️ รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง');
+        Swal.fire({
+          icon: 'warning',
+          title: 'รหัสผ่านไม่ตรงกัน',
+          text: 'กรุณาตรวจสอบรหัสผ่านและการยืนยันรหัสผ่านอีกครั้ง',
+          confirmButtonColor: '#16a34a'
+        });
         return;
       }
 
-      // [อัปเดตใหม่] ส่ง confirmPassword แนบไปใน body
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullname, email, password, confirmPassword })
-      });
-      const data = await res.json();
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fullname, email, password, confirmPassword })
+        });
+        const data = await res.json();
 
-      if (data.success) {
-        alert(data.message);
-        switchTab('login');
-      } else {
-        alert(data.error);
+        if (data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'ลงทะเบียนสำเร็จ!',
+            text: data.message || 'คุณสามารถเข้าสู่ระบบได้ทันที',
+            confirmButtonColor: '#16a34a'
+          }).then(() => {
+            switchTab('login');
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'ลงทะเบียนไม่สำเร็จ',
+            text: data.error || 'เกิดข้อผิดพลาดในการลงทะเบียน',
+            confirmButtonColor: '#16a34a'
+          });
+        }
+      } catch (err) {
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด',
+          text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้',
+          confirmButtonColor: '#16a34a'
+        });
       }
     });
   </script>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เข้าสู่ระบบ — ของพี่ดีต่อน้อง</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+
+  <div class="bg-white p-8 rounded-xl shadow-md border max-w-md w-full">
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-bold text-indigo-700">📦 ของพี่ดีต่อน้อง</h1>
+      <p class="text-xs text-gray-500 mt-1">เฉพาะนักศึกษา/บุคลากรที่ใช้อีเมล @rmutsvmail.com</p>
+    </div>
+
+    <!-- แถบสลับ ระหว่าง Login / Register -->
+    <div class="flex border-b mb-6">
+      <button id="tabLogin" onclick="switchTab('login')" class="w-1/2 py-2 font-bold text-indigo-600 border-b-2 border-indigo-600">เข้าสู่ระบบ</button>
+      <button id="tabRegister" onclick="switchTab('register')" class="w-1/2 py-2 font-bold text-gray-400 border-b-2 border-transparent">สมัครสมาชิก</button>
+    </div>
+
+    <!-- ฟอร์ม เข้าสู่ระบบ -->
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label class="block text-sm font-semibold mb-1">อีเมลวิทยาลัย</label>
+        <input type="email" id="loginEmail" placeholder="เช่น Phubet.d@rmutsvmail.com" required class="w-full border p-2.5 rounded-lg text-sm">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1">รหัสผ่าน</label>
+        <input type="password" id="loginPassword" required class="w-full border p-2.5 rounded-lg text-sm">
+      </div>
+      <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg">
+        เข้าสู่ระบบ
+      </button>
+    </form>
+
+    <!-- ฟอร์ม สมัครสมาชิก -->
+    <form id="registerForm" class="space-y-4 hidden">
+      <div>
+        <label class="block text-sm font-semibold mb-1">ชื่อ-นามสกุล / ชื่อเล่นและรุ่น</label>
+        <input type="text" id="regFullname" placeholder="เช่น ภูเบศ ด. (CPE#24)" required class="w-full border p-2.5 rounded-lg text-sm">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1">อีเมลวิทยาลัย (@rmutsvmail.com)</label>
+        <input type="email" id="regEmail" placeholder="เช่น Phubet.d@rmutsvmail.com" required class="w-full border p-2.5 rounded-lg text-sm">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1">รหัสผ่าน</label>
+        <input type="password" id="regPassword" required class="w-full border p-2.5 rounded-lg text-sm">
+      </div>
+      <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-lg">
+        ยืนยันลงทะเบียน
+      </button>
+    </form>
+  </div>
+
+  <script>
+    function switchTab(tab) {
+      if (tab === 'login') {
+        document.getElementById('loginForm').classList.remove('hidden');
+        document.getElementById('registerForm').classList.add('hidden');
+        document.getElementById('tabLogin').className = "w-1/2 py-2 font-bold text-indigo-600 border-b-2 border-indigo-600";
+        document.getElementById('tabRegister').className = "w-1/2 py-2 font-bold text-gray-400 border-b-2 border-transparent";
+      } else {
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('registerForm').classList.remove('hidden');
+        document.getElementById('tabRegister').className = "w-1/2 py-2 font-bold text-green-600 border-b-2 border-green-600";
+        document.getElementById('tabLogin').className = "w-1/2 py-2 font-bold text-gray-400 border-b-2 border-transparent";
+      }
+    }
+
+    // Submit Login
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        alert('เข้าสู่ระบบสำเร็จ!');
+        window.location.href = 'index.html';
+      } else {
+        alert(data.error);
+      }
+    });
+
+    // Submit Register
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fullname = document.getElementById('regFullname').value;
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullname, email, password })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        alert(data.message);
+        switchTab('login');
+      } else {
+        alert(data.error);
+      }
+    });
+  </script>
+</body>
+</html>

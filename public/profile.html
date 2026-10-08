@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>โปรไฟล์และโพสต์ของฉัน — ของพี่ดีต่อน้อง</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/auth-check.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-indigo-600 text-white shadow-md">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="index.html" class="text-2xl font-bold tracking-wide">📦 ของพี่ดีต่อน้อง</a>
+      <div id="userNavInfo"></div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-8 flex-1 w-full space-y-8">
+    
+    <!-- Section 1: ข้อมูลส่วนตัว & แก้ไขชื่อ -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+      <h2 class="text-xl font-bold text-indigo-700 mb-4">👤 ข้อมูลส่วนตัว</h2>
+      
+      <form id="updateNameForm" class="space-y-4 max-w-lg">
+        <div>
+          <label class="block text-sm font-semibold text-gray-600 mb-1">อีเมลวิทยาลัย (แก้ไขไม่ได้)</label>
+          <input type="email" id="profileEmail" disabled class="w-full bg-gray-100 border p-2.5 rounded-lg text-gray-500 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">ชื่อ-นามสกุล / ชื่อแสดงผล</label>
+          <input type="text" id="profileFullname" required class="w-full border p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400">
+          <p id="nameChangeHint" class="text-xs text-amber-600 mt-1">⚠️ สามารถแก้ไขชื่อได้เดือนละ 1 ครั้งเท่านั้น</p>
+        </div>
+
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-lg text-sm transition">
+          บันทึกชื่อใหม่
+        </button>
+      </form>
+    </div>
+
+    <!-- Section 2: รายการ Hardware ที่ฉันโพสต์ -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold text-gray-800">📦 อุปกรณ์ Hardware ที่ฉันส่งต่อ</h2>
+        <a href="post-item.html" class="text-sm bg-amber-400 hover:bg-amber-500 font-bold px-3 py-2 rounded-lg text-gray-900">+ ลงประกาศใหม่</a>
+      </div>
+
+      <div id="myItemsList" class="space-y-4">
+        <!-- รายการจะถูก render ผ่าน js/profile.js -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Modal สำหรับแก้ไขโพสต์ -->
+  <dialog id="editModal" class="p-6 bg-white rounded-xl shadow-2xl max-w-lg w-full backdrop:bg-gray-800/50">
+    <h3 class="text-lg font-bold mb-4 text-indigo-700">✏️ แก้ไขข้อมูล Hardware</h3>
+    <form id="editPostForm" class="space-y-3">
+      <input type="hidden" id="editItemId">
+      <div>
+        <label class="block text-xs font-bold mb-1">ชื่ออุปกรณ์</label>
+        <input type="text" id="editTitle" required class="w-full border p-2 rounded text-sm">
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-xs font-bold mb-1">หมวดหมู่</label>
+          <select id="editCategory" class="w-full border p-2 rounded text-sm">
+            <option value="Microcontroller">Microcontroller</option>
+            <option value="Sensor">Sensor</option>
+            <option value="Actuator">Actuator</option>
+            <option value="Display">Display</option>
+            <option value="Power">Power</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold mb-1">ประเภท</label>
+          <select id="editType" class="w-full border p-2 rounded text-sm">
+            <option value="Free">แจกฟรี</option>
+            <option value="Sell">ขายต่อ</option>
+            <option value="Trade">แลกเปลี่ยน</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-bold mb-1">แท็กชื่อวิชา</label>
+        <input type="text" id="editCourseTag" required class="w-full border p-2 rounded text-sm">
+      </div>
+      <div>
+        <label class="block text-xs font-bold mb-1">สภาพอุปกรณ์</label>
+        <input type="text" id="editCondition" required class="w-full border p-2 rounded text-sm">
+      </div>
+      <div>
+        <label class="block text-xs font-bold mb-1">รายละเอียด</label>
+        <textarea id="editDescription" rows="2" class="w-full border p-2 rounded text-sm"></textarea>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="document.getElementById('editModal').close()" class="px-4 py-2 text-sm bg-gray-200 rounded">ยกเลิก</button>
+        <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 text-white rounded font-bold">บันทึกการแก้ไข</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/profile.js"></script>
+</body>
+</html>

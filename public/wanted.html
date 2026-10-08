@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ตามหา Hardware — ของพี่ดีต่อน้อง</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/auth-check.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-indigo-600 text-white shadow-md">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center gap-6">
+        <a href="index.html" class="text-2xl font-bold tracking-wide">📦 ของพี่ดีต่อน้อง</a>
+        <nav class="hidden md:flex gap-4 text-sm font-semibold">
+          <a href="index.html" class="hover:text-indigo-200">รายการส่งต่อ</a>
+          <a href="wanted.html" class="text-amber-300 font-bold underline">🔍 บอร์ดตามหาของ</a>
+        </nav>
+      </div>
+      <div id="userNavInfo"></div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="bg-indigo-700 text-white py-8 px-4 text-center">
+    <h1 class="text-3xl font-extrabold mb-2">🔍 บอร์ดตามหา Hardware</h1>
+    <p class="text-indigo-200 mb-4">หาอุปกรณ์ชิ้นไหนไม่เจอ โพสต์รายละเอียดและรูปตัวอย่างทิ้งไว้ได้เลย!</p>
+    <button onclick="document.getElementById('postWantedModal').showModal()" class="bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold px-6 py-2.5 rounded-lg transition shadow">
+      + โพสต์ตามหาอุปกรณ์
+    </button>
+  </section>
+
+  <!-- Main Content Grid -->
+  <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full">
+    <div id="wantedGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- ข้อมูลจะแสดงผ่าน js/wanted.js -->
+    </div>
+  </main>
+
+  <!-- Modal สำหรับโพสต์ตามหา -->
+  <dialog id="postWantedModal" class="p-6 bg-white rounded-xl shadow-2xl max-w-lg w-full backdrop:bg-gray-800/50">
+    <h3 class="text-xl font-bold mb-4 text-indigo-700">📌 โพสต์ตามหา Hardware</h3>
+    <form id="wantedForm" class="space-y-4">
+      <div>
+        <label class="block text-sm font-semibold mb-1">ชื่ออุปกรณ์ที่ตามหา *</label>
+        <input type="text" id="wantedTitle" required placeholder="เช่น บอร์ด STM32F4, Raspberry Pi 4" class="w-full border p-2.5 rounded-lg text-sm">
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-1">รายละเอียด / วัตถุประสงค์การใช้งาน</label>
+        <textarea id="wantedDescription" rows="3" placeholder="ระบุวิชาที่ใช้ หรือสเปกอุปกรณ์ที่ต้องการ..." class="w-full border p-2.5 rounded-lg text-sm"></textarea>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-1">รูปภาพตัวอย่างอุปกรณ์ (ถ้ามี)</label>
+        <input type="file" id="wantedImage" accept="image/*" class="w-full text-sm border p-2 rounded-lg bg-gray-50">
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="document.getElementById('postWantedModal').close()" class="px-4 py-2 text-sm bg-gray-200 rounded-lg">ยกเลิก</button>
+        <button type="submit" class="px-5 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold">โพสต์ตามหา</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/wanted.js"></script>
+</body>
+</html>

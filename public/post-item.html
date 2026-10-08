@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ลงประกาศส่งต่อ Hardware — ของพี่ดีต่อน้อง</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/auth-check.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+
+  <header class="bg-indigo-600 text-white p-4">
+    <div class="max-w-3xl mx-auto flex justify-between items-center">
+      <a href="index.html" class="font-bold text-xl">← กลับหน้าหลัก</a>
+      <span class="font-semibold">ฟอร์มส่งต่อ Hardware</span>
+    </div>
+  </header>
+
+  <main class="max-w-2xl mx-auto my-8 bg-white p-6 rounded-xl shadow-md border border-gray-100">
+    <h1 class="text-2xl font-bold mb-6 text-indigo-700">ลงรายการอุปกรณ์ที่ต้องการส่งต่อ</h1>
+    
+    <form id="postForm" class="space-y-4">
+      <div>
+        <label class="block font-semibold mb-1">ชื่ออุปกรณ์ *</label>
+        <input type="text" id="title" required placeholder="เช่น Arduino UNO R3 + สายโหลด" class="w-full border rounded-lg p-2.5">
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block font-semibold mb-1">หมวดหมู่ *</label>
+          <select id="category" class="w-full border rounded-lg p-2.5">
+            <option value="Microcontroller">Microcontroller</option>
+            <option value="Sensor">Sensor</option>
+            <option value="Actuator">Actuator (มอเตอร์/Relay)</option>
+            <option value="Display">Display / จอแสดงผล</option>
+            <option value="Power">Power Supply / แบตเตอรี่</option>
+            <option value="Other">อุปกรณ์อื่นๆ</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">รูปแบบการส่งต่อ *</label>
+          <select id="type" class="w-full border rounded-lg p-2.5">
+            <option value="Free">แจกฟรี (Donation)</option>
+            <option value="Sell">ขายต่อราคาประหยัด</option>
+            <option value="Trade">แลกเปลี่ยนอุปกรณ์</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-semibold mb-1">แท็กชื่อวิชา / โปรเจกต์ที่เคยใช้ *</label>
+        <input type="text" id="courseTag" required placeholder="เช่น วิชา Embedded Systems, โปรเจกต์รดน้ำต้นไม้" class="w-full border rounded-lg p-2.5">
+      </div>
+
+      <div>
+        <label class="block font-semibold mb-1">สภาพอุปกรณ์และตำหนิ *</label>
+        <input type="text" id="condition" required placeholder="เช่น 90% บรรจุกล่องเดิม, มีรอยบัดกรีที่ขา Pin" class="w-full border rounded-lg p-2.5">
+      </div>
+
+      <div>
+        <label class="block font-semibold mb-1">รายละเอียดเพิ่มเติม</label>
+        <textarea id="description" rows="3" placeholder="ระบุข้อมูลเพิ่มเติม เช่น นัดรับได้ที่ตึกคณะวิศวะ..." class="w-full border rounded-lg p-2.5"></textarea>
+      </div>
+
+      <hr class="my-4">
+
+      <div>
+        <label class="block font-semibold mb-1">ชื่อผู้ส่งต่อ / ข้อมูลติดต่อ *</label>
+        <input type="text" id="giverName" required placeholder="เช่น พี่โบ๊ท CPE#25 (LINE ID: boat_cpe)" class="w-full border rounded-lg p-2.5">
+      </div>
+
+      <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition shadow">
+        ยืนยันลงประกาศส่งต่อ
+      </button>
+    </form>
+  </main>
+
+  <script src="js/post.js"></script>
+</body>
+</html>

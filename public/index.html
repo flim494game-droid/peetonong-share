@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ของพี่ดีต่อน้อง (PeeToNong Share)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- [HIGHLIGHT] เช็กล็อกอินทันทีตอนเริ่มเปิดหน้า -->
+  <script src="js/auth-check.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+
+<header class="bg-indigo-600 text-white shadow-md">
+  <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+    <div class="flex items-center gap-6">
+      <a href="index.html" class="text-2xl font-bold tracking-wide">📦 ของพี่ดีต่อน้อง</a>
+      <nav class="hidden md:flex gap-4 text-sm font-semibold">
+        <a href="index.html" class="text-amber-300 font-bold underline">รายการส่งต่อ</a>
+        <a href="wanted.html" class="hover:text-indigo-200">🔍 บอร์ดตามหาของ</a>
+      </nav>
+    </div>
+    <div id="userNavInfo"></div>
+  </div>
+</header>
+  <!-- Hero Section & Search -->
+  <section class="bg-indigo-700 text-white py-10 px-4 text-center">
+    <h1 class="text-3xl font-extrabold mb-2">ส่งต่ออุปกรณ์ ต่อยอดไอเดีย จากพี่สู่น้อง</h1>
+    <p class="text-indigo-200 mb-6">แพลตฟอร์มแบ่งปัน Hardware เหลือจากโปรเจกต์วิชาเรียนในมหาวิทยาลัย</p>
+    
+    <!-- Search Bar -->
+    <div class="max-w-xl mx-auto flex gap-2">
+      <input type="text" id="searchInput" placeholder="ค้นหาชื่ออุปกรณ์ หรือแท็กชื่อวิชา (เช่น ESP32, CPE101)..." 
+             class="w-full px-4 py-3 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400">
+      <button onclick="fetchItems()" class="bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold px-6 py-3 rounded-lg">
+        ค้นหา
+      </button>
+    </div>
+  </section>
+
+  <!-- เนื้อหาเดิม... -->
+  <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full">
+    <h2 class="text-xl font-bold mb-4 text-gray-700">รายการ Hardware ที่พร้อมส่งต่อ</h2>
+    <div id="itemsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -6,7 +6,9 @@ const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 
 const JWT_SECRET = 'peetonong_secret_key_2026'; // ตั้งค่า Secret Key สำหรับ JWT
-const ALLOWED_DOMAIN = '@rmutsvmail.com';       // กำหนด Domain อีเมลที่อนุญาต
+
+// [ดัดแปลง] กำหนด Regex ตรวจสอบอีเมลสถาบัน (@rmutsvmail.com และ @rmutsv.ac.th เท่านั้น)
+const RMUTSV_EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@(rmutsvmail\.com|rmutsv\.ac\.th)$/i;
 
 // --- 1. ระบบสมัครสมาชิก (Register) ---
 router.post('/register', async (req, res) => {
@@ -18,11 +20,12 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
     }
 
-    // [HIGHLIGHT] ตรวจสอบว่าใช้อีเมลของสถาบันหรือไม่
     const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail.endsWith(ALLOWED_DOMAIN)) {
+
+    // [แก้ไขใหม่] ตรวจสอบรูปแบบอีเมลด้วย Regex (ป้องกันการพิมพ์ g เกิน หรือใส่ซับโดเมนปลอม)
+    if (!RMUTSV_EMAIL_REGEX.test(cleanEmail)) {
       return res.status(400).json({ 
-        error: `ระบบอนุญาตเฉพาะอีเมลสถาบัน (${ALLOWED_DOMAIN}) เท่านั้น` 
+        error: 'กรุณาใช้อีเมลสถาบัน (@rmutsvmail.com หรือ @rmutsv.ac.th) ที่ถูกต้องเท่านั้น' 
       });
     }
 

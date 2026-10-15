@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const db = require('./config/db');
 const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/user'); // 1. นำเข้า User Routes
+const userRoutes = require('./routes/user'); 
 const authMiddleware = require('./middleware/auth');
 const wantedRoutes = require('./routes/wanted');
 
@@ -12,12 +12,16 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+
+// [FIX 1] เพิ่มขนาด Limit ให้รองรับการส่ง Base64 รูปภาพขนาดใหญ่ (สูงสุด 10MB)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/user', userRoutes); // 2. เรียกใช้งาน User Routes (/api/user/...)
+app.use('/api/user', userRoutes);
 app.use('/api/wanted', wantedRoutes);
 
 // API ดึงรายการทั้งหมด
@@ -52,6 +56,7 @@ app.get('/api/items', async (req, res) => {
       price: item.price,
       courseTag: item.course_tag,
       description: item.description,
+      imageUrl: item.image_url, // [FIX 2] เพิ่มการส่งค่า Base64 / URL รูปภาพ
       giver: {
         name: item.giver_name,
         contactInfo: item.contact_info
@@ -67,16 +72,16 @@ app.get('/api/items', async (req, res) => {
   }
 });
 
-// API เพิ่มรายการ Hardware (บันทึก user_id ลง DB)
+// API เพิ่มรายการ Hardware (บันทึก user_id และ image_url ลง DB)
 app.post('/api/items', authMiddleware, async (req, res) => {
   try {
-    const { title, category, type, price, courseTag, condition, description, giver } = req.body;
+    const { title, category, type, price, courseTag, condition, description, giver, imageUrl } = req.body;
     const userId = req.user.id; // ดึง user_id จาก Token
 
     const sql = `
       INSERT INTO items 
-      (title, category, type, price, course_tag, condition_detail, description, giver_name, contact_info, user_id) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (title, category, type, price, course_tag, condition_detail, description, giver_name, contact_info, user_id, image_url) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const [result] = await db.query(sql, [
@@ -84,7 +89,8 @@ app.post('/api/items', authMiddleware, async (req, res) => {
       courseTag, condition, description || '',
       giver?.name || req.user.fullname,
       giver?.contactInfo || req.user.email,
-      userId // [HIGHLIGHT] เก็บ user_id เจ้าของโพสต์
+      userId,
+      imageUrl || null // บันทึกรูปภาพ Base64
     ]);
 
     res.status(201).json({ success: true, insertId: result.insertId });
@@ -93,6 +99,7 @@ app.post('/api/items', authMiddleware, async (req, res) => {
     res.status(400).json({ error: 'ไม่สามารถบันทึกข้อมูลได้' });
   }
 });
+
 // ==========================================
 // ADMIN API ROUTES (สำหรับจัดการข้อมูล Admin)
 // ==========================================
@@ -112,19 +119,10 @@ const verifyAdminToken = (req, res, next) => {
 // 1. ดึงรายชื่อสมาชิกทั้งหมด
 app.get('/api/admin/users', verifyAdminToken, async (req, res) => {
   try {
-    // ปรับเปลี่ยน Query ให้ตรงกับ ORM/Database ของคุณ (เช่น Prisma หรือ SQLite/MySQL)
-    // ตัวอย่าง Prisma:
-    // const users = await prisma.user.findMany({
-    //   select: { id: true, fullname: true, email: true, createdAt: true }
-    // });
-    
-    // ตัวอย่าง Mock Data หรือปรับตาม Database จริง:
-    const users = await prisma.user.findMany({
-      select: { id: true, fullname: true, email: true, createdAt: true }
-    });
+    const [users] = await db.query('SELECT id, fullname, email, created_at FROM users ORDER BY id DESC');
     res.json(users);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching users:", err);
     res.status(500).json({ error: 'ไม่สามารถดึงข้อมูลสมาชิกได้' });
   }
 });
@@ -133,10 +131,11 @@ app.get('/api/admin/users', verifyAdminToken, async (req, res) => {
 app.delete('/api/admin/items/:id', verifyAdminToken, async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.item.delete({ where: { id: Number(id) } });
+    // [FIX 3] เปลี่ยนจาก prisma เป็น db.query
+    await db.query('DELETE FROM items WHERE id = ?', [id]);
     res.json({ success: true, message: 'ลบรายการส่งต่อเรียบร้อยแล้ว' });
   } catch (err) {
-    console.error(err);
+    console.error("Error deleting item:", err);
     res.status(500).json({ error: 'ไม่สามารถลบรายการได้' });
   }
 });
@@ -145,10 +144,11 @@ app.delete('/api/admin/items/:id', verifyAdminToken, async (req, res) => {
 app.delete('/api/admin/wanted/:id', verifyAdminToken, async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.wantedItem.delete({ where: { id: Number(id) } });
+    // [FIX 3] เปลี่ยนจาก prisma เป็น db.query
+    await db.query('DELETE FROM wanted_items WHERE id = ?', [id]);
     res.json({ success: true, message: 'ลบโพสต์ตามหาเรียบร้อยแล้ว' });
   } catch (err) {
-    console.error(err);
+    console.error("Error deleting wanted item:", err);
     res.status(500).json({ error: 'ไม่สามารถลบโพสต์ตามหาได้' });
   }
 });
@@ -157,10 +157,11 @@ app.delete('/api/admin/wanted/:id', verifyAdminToken, async (req, res) => {
 app.delete('/api/admin/users/:id', verifyAdminToken, async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.user.delete({ where: { id: Number(id) } });
+    // [FIX 3] เปลี่ยนจาก prisma เป็น db.query
+    await db.query('DELETE FROM users WHERE id = ?', [id]);
     res.json({ success: true, message: 'ระงับสิทธิ์และลบสมาชิกเรียบร้อยแล้ว' });
   } catch (err) {
-    console.error(err);
+    console.error("Error deleting user:", err);
     res.status(500).json({ error: 'ไม่สามารถระงับสิทธิ์สมาชิกได้' });
   }
 });

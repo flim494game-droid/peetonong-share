@@ -220,9 +220,11 @@ function renderAdminUsers(users) {
 
   tbody.innerHTML = users.map(user => `
     <tr class="hover:bg-slate-50/80 transition">
-      <td class="py-3 px-2 font-bold text-slate-800">${user.fullname || user.name}</td>
+      <td class="py-3 px-2 font-bold text-slate-800">${user.fullname || '-'}</td>
       <td class="py-3 px-2 text-slate-600">${user.email}</td>
-      <td class="py-3 px-2 text-slate-400">${user.createdAt ? new Date(user.createdAt).toLocaleDateString('th-TH') : '-'}</td>
+      <td class="py-3 px-2 text-slate-400">
+        ${user.created_at ? new Date(user.created_at).toLocaleDateString('th-TH') : '-'}
+      </td>
       <td class="py-3 px-2 text-right">
         <button onclick="adminDeleteUser(${user.id})" class="bg-red-50 hover:bg-red-100 text-red-600 font-bold px-2.5 py-1 rounded-lg transition">
           🚫 ระงับสิทธิ์

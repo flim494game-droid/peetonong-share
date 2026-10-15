@@ -3,13 +3,14 @@
 // 1. ตรวจสอบ Session เมื่อโหลดหน้าเว็บ
 (function checkAuth() {
   const token = localStorage.getItem('token');
-  const user = localStorage.getItem('user');
+  
+  // รายชื่อหน้าที่อนุญาตให้เข้าได้โดยไม่ต้องล็อกอิน
+  const currentPath = window.location.pathname;
+  const isLoginPage = currentPath.endsWith('login.html') || currentPath.endsWith('register.html');
 
-  // ถ้าไม่มี Token แล้วไม่ได้อยู่ที่หน้า login.html ให้ส่งกลับไปหน้า Login
-  if (!token || !user) {
-    if (!window.location.pathname.endsWith('login.html')) {
-      window.location.href = 'login.html';
-    }
+  // หากไม่มี Token และไม่อยู่ในหน้า Login/Register ให้ย้ายไปหน้า login.html
+  if (!token && !isLoginPage) {
+    window.location.href = 'login.html';
   }
 })();
 

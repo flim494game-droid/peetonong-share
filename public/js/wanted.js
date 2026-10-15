@@ -3,6 +3,16 @@
 const token = localStorage.getItem('token');
 const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
+// ฟังก์ชันแปลงไฟล์รูปภาพเป็น Base64 String
+function convertFileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (error) => reject(error);
+  });
+}
+
 // ฟังก์ชันแสดงข้อมูลติดต่อผู้โพสต์ตามหาอุปกรณ์
 function contactRequester(email, fullname, title) {
   Swal.fire({
@@ -76,8 +86,7 @@ async function fetchWantedItems() {
   }
 }
 
-// ส่งฟอร์มสร้างโพสต์ตามหา
-// ส่งฟอร์มสร้างโพสต์ตามหา (ป้องกันการกดซ้ำ Double Click)
+// ส่งฟอร์มสร้างโพสต์ตามหา (ป้องกัน Double Click + แปลงไฟล์เป็น Base64)
 document.getElementById('wantedForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -92,22 +101,31 @@ document.getElementById('wantedForm')?.addEventListener('submit', async (e) => {
     submitBtn.innerText = 'กำลังโพสต์...';
   }
 
-  const formData = new FormData();
-  formData.append('title', document.getElementById('wantedTitle').value);
-  formData.append('description', document.getElementById('wantedDescription').value);
-
-  const imageFile = document.getElementById('wantedImage').files[0];
-  if (imageFile) {
-    formData.append('image', imageFile);
-  }
-
   try {
+    const title = document.getElementById('wantedTitle').value;
+    const description = document.getElementById('wantedDescription').value;
+    const imageFile = document.getElementById('wantedImage').files[0];
+
+    // 2. แปลงไฟล์รูปภาพเป็น Base64 หากมีการเลือกรูปภาพ
+    let base64Image = null;
+    if (imageFile) {
+      base64Image = await convertFileToBase64(imageFile);
+    }
+
+    const payload = {
+      title: title,
+      description: description,
+      imageUrl: base64Image
+    };
+
+    // 3. ส่งข้อมูลในรูปแบบ JSON
     const res = await fetch('/api/wanted', {
       method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: formData
+      body: JSON.stringify(payload)
     });
 
     const data = await res.json();
@@ -146,7 +164,7 @@ document.getElementById('wantedForm')?.addEventListener('submit', async (e) => {
       customClass: { popup: 'rounded-2xl' }
     });
   } finally {
-    // 2. คืนค่าปุ่มให้กลับมาใช้งานได้ตามปกติเมื่อประมวลผลเสร็จสิ้น
+    // 4. คืนค่าปุ่มให้กลับมาใช้งานได้ตามปกติเมื่อเสร็จสิ้น
     if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -208,5 +226,53 @@ async function deleteWanted(id) {
     }
   });
 }
+
+// ฟังก์ชันสำหรับจัดการเมื่อไม่ได้ล็อกอินหรือ Session หมดอายุ (401 / 403)
+function handleAuthError(res) {
+  if (res.status === 401 || res.status === 403) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+
+    Swal.fire({
+      icon: 'warning',
+      title: 'กรุณาเข้าสู่ระบบ',
+      text: 'Session ของคุณหมดอายุหรือยังไม่ได้เข้าสู่ระบบ',
+      confirmButtonText: 'ตกลง',
+      confirmButtonColor: '#4f46e5',
+      allowOutsideClick: false,
+      customClass: { popup: 'rounded-2xl' }
+    }).then(() => {
+      window.location.href = 'login.html';
+    });
+    return true; // เกิด Error จากการ Auth
+  }
+  return false;
+}
+
+// ตัวอย่างการนำไปใช้ในฟังก์ชันสร้างโพสต์ตามหา
+document.getElementById('wantedForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  try {
+    const res = await fetch('/api/wanted', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    // ตรวจสอบหากเกิด 401 / 403 ให้ส่งไปหน้า Login
+    if (handleAuthError(res)) return;
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      // ทำงานเมื่อสำเร็จ...
+    }
+  } catch (err) {
+    console.error(err);
+  }
+});
 
 document.addEventListener('DOMContentLoaded', fetchWantedItems);

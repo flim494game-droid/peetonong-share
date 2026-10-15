@@ -1,21 +1,49 @@
-// middleware/auth.js
-const jwt = require('jsonwebtoken');
-const JWT_SECRET = 'peetonong_secret_key_2026';
+// public/js/wanted.js
 
-module.exports = function (req, res, next) {
-  // ดึง Token จาก Header 'Authorization'
-  const authHeader = req.header('Authorization');
-  const token = authHeader && authHeader.split(' ')[1]; // รูปแบบ "Bearer <token>"
+// ฟังก์ชันสำหรับจัดการเมื่อไม่ได้ล็อกอินหรือ Session หมดอายุ (401 / 403)
+function handleAuthError(res) {
+  if (res.status === 401 || res.status === 403) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
 
-  if (!token) {
-    return res.status(401).json({ error: 'ไม่มีสิทธิ์เข้าถึง กรุณาเข้าสู่ระบบก่อน' });
+    Swal.fire({
+      icon: 'warning',
+      title: 'กรุณาเข้าสู่ระบบ',
+      text: 'Session ของคุณหมดอายุหรือยังไม่ได้เข้าสู่ระบบ',
+      confirmButtonText: 'ตกลง',
+      confirmButtonColor: '#4f46e5',
+      allowOutsideClick: false,
+      customClass: { popup: 'rounded-2xl' }
+    }).then(() => {
+      window.location.href = 'login.html';
+    });
+    return true; // เกิด Error จากการ Auth
   }
+  return false;
+}
+
+// ตัวอย่างการนำไปใช้ในฟังก์ชันสร้างโพสต์ตามหา
+document.getElementById('wantedForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded; // เก็บข้อมูลผู้ใช้ไว้ใน request
-    next(); // อนุญาตให้ทำงานต่อ
+    const res = await fetch('/api/wanted', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    // ตรวจสอบหากเกิด 401 / 403 ให้ส่งไปหน้า Login
+    if (handleAuthError(res)) return;
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      // ทำงานเมื่อสำเร็จ...
+    }
   } catch (err) {
-    res.status(403).json({ error: 'Session หมดอายุหรือ Token ไม่ถูกต้อง กรุณาล็อกอินใหม่' });
+    console.error(err);
   }
-};
+});

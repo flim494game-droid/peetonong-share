@@ -194,17 +194,26 @@ async function deleteWanted(id) {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
+            if (res.ok && data.success) {
+              // 1. สั่งปิด Modal และรีเซ็ตฟอร์มก่อน
+              const modal = document.getElementById('postWantedModal');
+              if (modal && typeof modal.close === 'function') {
+                modal.close();
+              }
+              document.getElementById('wantedForm').reset();
 
-        if (res.ok) {
-          Swal.fire({
-            icon: 'success',
-            title: 'ลบโพสต์เรียบร้อย',
-            timer: 1200,
-            showConfirmButton: false,
-            customClass: { popup: 'rounded-2xl' }
-          });
-          fetchWantedItems();
-        } else {
+              // 2. แสดง SweetAlert2 (จะขึ้นมาเด่นๆ ด้านหน้าทันที)
+              Swal.fire({
+                icon: 'success',
+                title: 'โพสต์ตามหาสำเร็จ!',
+                text: 'รายการตามหาของคุณถูกโพสต์ขึ้นบอร์ดเรียบร้อยแล้ว',
+                timer: 1500,
+                showConfirmButton: false,
+                customClass: { popup: 'rounded-2xl' }
+              }).then(() => {
+                fetchWantedItems();
+              });
+            } else {
           Swal.fire({
             icon: 'error',
             title: 'ไม่สามารถลบได้',
@@ -226,53 +235,5 @@ async function deleteWanted(id) {
     }
   });
 }
-
-// ฟังก์ชันสำหรับจัดการเมื่อไม่ได้ล็อกอินหรือ Session หมดอายุ (401 / 403)
-function handleAuthError(res) {
-  if (res.status === 401 || res.status === 403) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-
-    Swal.fire({
-      icon: 'warning',
-      title: 'กรุณาเข้าสู่ระบบ',
-      text: 'Session ของคุณหมดอายุหรือยังไม่ได้เข้าสู่ระบบ',
-      confirmButtonText: 'ตกลง',
-      confirmButtonColor: '#4f46e5',
-      allowOutsideClick: false,
-      customClass: { popup: 'rounded-2xl' }
-    }).then(() => {
-      window.location.href = 'login.html';
-    });
-    return true; // เกิด Error จากการ Auth
-  }
-  return false;
-}
-
-// ตัวอย่างการนำไปใช้ในฟังก์ชันสร้างโพสต์ตามหา
-document.getElementById('wantedForm')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  try {
-    const res = await fetch('/api/wanted', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
-    });
-
-    // ตรวจสอบหากเกิด 401 / 403 ให้ส่งไปหน้า Login
-    if (handleAuthError(res)) return;
-
-    const data = await res.json();
-    if (res.ok && data.success) {
-      // ทำงานเมื่อสำเร็จ...
-    }
-  } catch (err) {
-    console.error(err);
-  }
-});
 
 document.addEventListener('DOMContentLoaded', fetchWantedItems);

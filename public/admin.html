@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — ของพี่ดีต่อน้อง</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- SweetAlert2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
+
+  <!-- Header Admin -->
+  <header class="bg-slate-900 text-white sticky top-0 z-50 shadow-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">🛡️</span>
+        <div>
+          <h1 class="text-lg font-black tracking-wide text-amber-400">PeeToNong Admin</h1>
+          <p class="text-[10px] text-slate-400">ระบบจัดการผู้ดูแลระบบ</p>
+        </div>
+      </div>
+
+      <div id="adminNavInfo" class="flex items-center gap-3">
+        <!-- ปุ่ม Logout/สถานะจะถูก Render ที่นี่ -->
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
+    
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500">รายการส่งต่อทั้งหมด</p>
+          <h3 id="statTotalItems" class="text-2xl font-black text-indigo-600 mt-1">0</h3>
+        </div>
+        <span class="text-3xl p-3 bg-indigo-50 rounded-xl">📦</span>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500">โพสต์ตามหาทั้งหมด</p>
+          <h3 id="statTotalWanted" class="text-2xl font-black text-amber-500 mt-1">0</h3>
+        </div>
+        <span class="text-3xl p-3 bg-amber-50 rounded-xl">🔍</span>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500">สมาชิกในระบบ</p>
+          <h3 id="statTotalUsers" class="text-2xl font-black text-emerald-600 mt-1">0</h3>
+        </div>
+        <span class="text-3xl p-3 bg-emerald-50 rounded-xl">👥</span>
+      </div>
+    </div>
+
+    <!-- Management Tables -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+      <!-- Tabs -->
+      <div class="flex border-b border-slate-100 bg-slate-50/50 p-2 gap-2 text-xs font-bold">
+        <button id="tabItemsBtn" onclick="switchAdminTab('items')" class="px-4 py-2.5 rounded-xl bg-white text-indigo-600 shadow-sm border border-slate-200/60">
+          📦 จัดการรายการส่งต่อ
+        </button>
+        <button id="tabWantedBtn" onclick="switchAdminTab('wanted')" class="px-4 py-2.5 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-white/50">
+          🔍 จัดการโพสต์ตามหา
+        </button>
+        <button id="tabUsersBtn" onclick="switchAdminTab('users')" class="px-4 py-2.5 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-white/50">
+          👥 จัดการสมาชิก
+        </button>
+      </div>
+
+      <!-- Content Views -->
+      <div class="p-6">
+        <!-- 1. Table Items -->
+        <div id="adminItemsView" class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="text-xs font-semibold text-slate-400 border-b border-slate-100 pb-3">
+                <th class="py-3 px-2">รายการ</th>
+                <th class="py-3 px-2">ผู้ส่งต่อ</th>
+                <th class="py-3 px-2">ประเภท/ราคา</th>
+                <th class="py-3 px-2">หมวดหมู่</th>
+                <th class="py-3 px-2 text-right">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="adminItemsTable" class="text-xs divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+
+        <!-- 2. Table Wanted -->
+        <div id="adminWantedView" class="overflow-x-auto hidden">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="text-xs font-semibold text-slate-400 border-b border-slate-100 pb-3">
+                <th class="py-3 px-2">หัวข้อที่ตามหา</th>
+                <th class="py-3 px-2">ผู้โพสต์</th>
+                <th class="py-3 px-2">อีเมลติดต่อ</th>
+                <th class="py-3 px-2 text-right">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="adminWantedTable" class="text-xs divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+
+        <!-- 3. Table Users -->
+        <div id="adminUsersView" class="overflow-x-auto hidden">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="text-xs font-semibold text-slate-400 border-b border-slate-100 pb-3">
+                <th class="py-3 px-2">ชื่อ-นามสกุล</th>
+                <th class="py-3 px-2">อีเมล</th>
+                <th class="py-3 px-2">วันที่สมัคร</th>
+                <th class="py-3 px-2 text-right">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="adminUsersTable" class="text-xs divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>

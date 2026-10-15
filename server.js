@@ -93,6 +93,77 @@ app.post('/api/items', authMiddleware, async (req, res) => {
     res.status(400).json({ error: 'ไม่สามารถบันทึกข้อมูลได้' });
   }
 });
+// ==========================================
+// ADMIN API ROUTES (สำหรับจัดการข้อมูล Admin)
+// ==========================================
+
+// Middleware ตรวจสอบ Admin Token
+const verifyAdminToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (token === 'admin-secret-token-key') {
+    next();
+  } else {
+    return res.status(403).json({ error: 'ไม่มีสิทธิ์เข้าถึงส่วนผู้ดูแลระบบ' });
+  }
+};
+
+// 1. ดึงรายชื่อสมาชิกทั้งหมด
+app.get('/api/admin/users', verifyAdminToken, async (req, res) => {
+  try {
+    // ปรับเปลี่ยน Query ให้ตรงกับ ORM/Database ของคุณ (เช่น Prisma หรือ SQLite/MySQL)
+    // ตัวอย่าง Prisma:
+    // const users = await prisma.user.findMany({
+    //   select: { id: true, fullname: true, email: true, createdAt: true }
+    // });
+    
+    // ตัวอย่าง Mock Data หรือปรับตาม Database จริง:
+    const users = await prisma.user.findMany({
+      select: { id: true, fullname: true, email: true, createdAt: true }
+    });
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'ไม่สามารถดึงข้อมูลสมาชิกได้' });
+  }
+});
+
+// 2. Admin สั่งลบรายการส่งต่อ Hardware
+app.delete('/api/admin/items/:id', verifyAdminToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.item.delete({ where: { id: Number(id) } });
+    res.json({ success: true, message: 'ลบรายการส่งต่อเรียบร้อยแล้ว' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'ไม่สามารถลบรายการได้' });
+  }
+});
+
+// 3. Admin สั่งลบโพสต์ตามหา
+app.delete('/api/admin/wanted/:id', verifyAdminToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.wantedItem.delete({ where: { id: Number(id) } });
+    res.json({ success: true, message: 'ลบโพสต์ตามหาเรียบร้อยแล้ว' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'ไม่สามารถลบโพสต์ตามหาได้' });
+  }
+});
+
+// 4. Admin สั่งระงับสิทธิ์ / ลบสมาชิก
+app.delete('/api/admin/users/:id', verifyAdminToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.user.delete({ where: { id: Number(id) } });
+    res.json({ success: true, message: 'ระงับสิทธิ์และลบสมาชิกเรียบร้อยแล้ว' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'ไม่สามารถระงับสิทธิ์สมาชิกได้' });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);

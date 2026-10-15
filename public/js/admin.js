@@ -12,7 +12,7 @@ function checkAdminAuth() {
   }
 }
 
-// Modal เข้าสู่ระบบ Admin ด้วย SweetAlert2
+// Modal เข้าสู่ระบบ Admin
 function showAdminLoginModal() {
   Swal.fire({
     title: '<span class="text-xl font-black text-slate-800">🛡️ เข้าสู่ระบบ Admin</span>',
@@ -42,7 +42,6 @@ function showAdminLoginModal() {
         return false;
       }
 
-      // เช็ก Username และ Password (admin / adminpw)
       if (username === 'admin' && password === 'adminpw') {
         return { success: true, token: 'admin-secret-token-key' };
       } else {
@@ -69,7 +68,6 @@ function showAdminLoginModal() {
   });
 }
 
-// Render Header ส่วนผู้ใช้งาน Admin
 function renderAdminHeader() {
   const container = document.getElementById('adminNavInfo');
   if (!container) return;
@@ -86,7 +84,6 @@ function renderAdminHeader() {
   `;
 }
 
-// ออกจากระบบ Admin
 function adminLogout() {
   Swal.fire({
     title: 'ออกจากระบบ Admin?',
@@ -107,7 +104,6 @@ function adminLogout() {
   });
 }
 
-// สลับ Tab ในแผงควบคุม
 function switchAdminTab(tab) {
   const itemsView = document.getElementById('adminItemsView');
   const wantedView = document.getElementById('adminWantedView');
@@ -146,17 +142,17 @@ async function loadAdminData() {
     const [resItems, resWanted, resUsers] = await Promise.all([
       fetch('/api/items'),
       fetch('/api/wanted'),
-      fetch('/api/admin/users', { headers: { 'Authorization': `Bearer ${adminToken}` } }).catch(() => null)
+      fetch('/api/admin/users', { headers: { 'Authorization': `Bearer ${adminToken}` } })
     ]);
 
-    const items = await resItems.json();
-    const wanted = await resWanted.json();
-    const users = resUsers ? await resUsers.json() : [];
+    const items = resItems.ok ? await resItems.json() : [];
+    const wanted = resWanted.ok ? await resWanted.json() : [];
+    const users = resUsers.ok ? await resUsers.json() : [];
 
     // อัปเดตตัวเลข Stats
-    document.getElementById('statTotalItems').innerText = items.length || 0;
-    document.getElementById('statTotalWanted').innerText = wanted.length || 0;
-    document.getElementById('statTotalUsers').innerText = users.length || 0;
+    document.getElementById('statTotalItems').innerText = Array.isArray(items) ? items.length : 0;
+    document.getElementById('statTotalWanted').innerText = Array.isArray(wanted) ? wanted.length : 0;
+    document.getElementById('statTotalUsers').innerText = Array.isArray(users) ? users.length : 0;
 
     renderAdminItems(items);
     renderAdminWanted(wanted);
@@ -178,7 +174,7 @@ function renderAdminItems(items) {
   tbody.innerHTML = items.map(item => `
     <tr class="hover:bg-slate-50/80 transition">
       <td class="py-3 px-2 font-bold text-slate-800">${item.title}</td>
-      <td class="py-3 px-2 text-slate-600">${item.giver?.name || 'ไม่ระบุ'}</td>
+      <td class="py-3 px-2 text-slate-600">${item.giver?.fullname || item.giver?.name || 'ไม่ระบุ'}</td>
       <td class="py-3 px-2 font-semibold ${item.type === 'Free' ? 'text-green-600' : 'text-amber-600'}">
         ${item.type === 'Free' ? 'ให้ฟรี' : `฿${item.price}`}
       </td>
@@ -226,7 +222,7 @@ function renderAdminUsers(users) {
     <tr class="hover:bg-slate-50/80 transition">
       <td class="py-3 px-2 font-bold text-slate-800">${user.fullname || user.name}</td>
       <td class="py-3 px-2 text-slate-600">${user.email}</td>
-      <td class="py-3 px-2 text-slate-400">${new Date(user.createdAt || Date.now()).toLocaleDateString('th-TH')}</td>
+      <td class="py-3 px-2 text-slate-400">${user.createdAt ? new Date(user.createdAt).toLocaleDateString('th-TH') : '-'}</td>
       <td class="py-3 px-2 text-right">
         <button onclick="adminDeleteUser(${user.id})" class="bg-red-50 hover:bg-red-100 text-red-600 font-bold px-2.5 py-1 rounded-lg transition">
           🚫 ระงับสิทธิ์
@@ -236,7 +232,7 @@ function renderAdminUsers(users) {
   `).join('');
 }
 
-// ลบ Item โดย Admin
+// ลบ Item
 function adminDeleteItem(id) {
   Swal.fire({
     title: 'ลบรายการส่งต่อนี้?',
@@ -251,14 +247,16 @@ function adminDeleteItem(id) {
     customClass: { popup: 'rounded-2xl' }
   }).then(async (result) => {
     if (result.isConfirmed) {
-      await fetch(`/api/user/items/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${adminToken}` } });
-      Swal.fire({ icon: 'success', title: 'ลบเรียบร้อย', timer: 1000, showConfirmButton: false, customClass: { popup: 'rounded-2xl' } });
-      loadAdminData();
+      const res = await fetch(`/api/admin/items/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${adminToken}` } });
+      if (res.ok) {
+        Swal.fire({ icon: 'success', title: 'ลบเรียบร้อย', timer: 1000, showConfirmButton: false, customClass: { popup: 'rounded-2xl' } });
+        loadAdminData();
+      }
     }
   });
 }
 
-// ลบ โพสต์ตามหา โดย Admin
+// ลบ Wanted
 function adminDeleteWanted(id) {
   Swal.fire({
     title: 'ลบโพสต์ตามหานี้?',
@@ -273,12 +271,37 @@ function adminDeleteWanted(id) {
     customClass: { popup: 'rounded-2xl' }
   }).then(async (result) => {
     if (result.isConfirmed) {
-      await fetch(`/api/wanted/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${adminToken}` } });
-      Swal.fire({ icon: 'success', title: 'ลบเรียบร้อย', timer: 1000, showConfirmButton: false, customClass: { popup: 'rounded-2xl' } });
-      loadAdminData();
+      const res = await fetch(`/api/admin/wanted/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${adminToken}` } });
+      if (res.ok) {
+        Swal.fire({ icon: 'success', title: 'ลบเรียบร้อย', timer: 1000, showConfirmButton: false, customClass: { popup: 'rounded-2xl' } });
+        loadAdminData();
+      }
     }
   });
 }
 
-// เรียกทำงานเมื่อโหลดหน้า
+// ระงับ User
+function adminDeleteUser(id) {
+  Swal.fire({
+    title: 'ระงับสิทธิ์สมาชิกนี้?',
+    text: 'บัญชีผู้ใช้นี้จะถูกลบออกจากระบบ',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'ระงับสิทธิ์',
+    cancelButtonText: 'ยกเลิก',
+    reverseButtons: true,
+    customClass: { popup: 'rounded-2xl' }
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${adminToken}` } });
+      if (res.ok) {
+        Swal.fire({ icon: 'success', title: 'ระงับสิทธิ์เรียบร้อย', timer: 1000, showConfirmButton: false, customClass: { popup: 'rounded-2xl' } });
+        loadAdminData();
+      }
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', checkAdminAuth);

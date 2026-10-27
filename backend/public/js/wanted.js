@@ -26,12 +26,21 @@ async function fetchWantedItems() {
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
     grid.innerHTML = items.map(item => {
-      // ตรวจสอบโครงสร้าง URL รูปภาพ (รองรับ Base64, Path /uploads/ หรือรูปว่าง)
+      // กำหนดความสูง 192px (h-48) และล๊อกกรอบรูปภาพให้เท่ากันทุกการ์ด
       let imageHtml = '';
       if (item.imageUrl) {
-        imageHtml = `<img src="${item.imageUrl}" alt="${item.title}" class="w-full h-48 object-cover rounded-t-xl" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'flex items-center justify-center h-48 bg-gray-100 text-gray-400 font-medium\\'>📷 รูปภาพไม่สมบูรณ์</div>';" />`;
+        imageHtml = `
+          <div class="w-full h-48 overflow-hidden rounded-t-xl bg-gray-100">
+            <img src="${item.imageUrl}" 
+                alt="${item.title}" 
+                class="w-full h-full object-cover object-center" 
+                onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'flex items-center justify-center w-full h-48 bg-indigo-50/50 text-indigo-300 font-semibold text-sm rounded-t-xl\\'>📷 รูปภาพไม่สมบูรณ์</div>';" />
+          </div>`;
       } else {
-        imageHtml = `<div class="flex items-center justify-center h-48 bg-indigo-50/50 text-indigo-300 font-semibold text-sm">📷 ไม่มีรูปภาพ</div>`;
+        imageHtml = `
+          <div class="flex items-center justify-center w-full h-48 bg-indigo-50/50 text-indigo-300 font-semibold text-sm rounded-t-xl">
+            📷 ไม่มีรูปภาพ
+          </div>`;
       }
 
       const requesterName = item.requester?.fullname || 'ไม่ระบุชื่อ';

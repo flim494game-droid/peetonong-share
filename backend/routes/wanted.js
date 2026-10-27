@@ -1,38 +1,7 @@
-// routes/wanted.js
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const db = require('../config/db');
 const authMiddleware = require('../middleware/auth');
-
-// ตั้งค่าโฟลเดอร์เก็บไฟล์อัปโหลด
-const uploadDir = 'public/uploads/';
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'wanted-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-// กรองประเภทไฟล์ ให้รับเฉพาะรูปภาพ
-const upload = multer({
-  storage: storage,
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('อนุญาตเฉพาะไฟล์รูปภาพเท่านั้น!'), false);
-    }
-  },
-  limits: { fileSize: 5 * 1024 * 1024 } // จำกัดขนาดไฟล์ไม่เกิน 5MB
-});
 
 // --- 1. ดึงรายการตามหา Hardware ทั้งหมด ---
 router.get('/', async (req, res) => {
@@ -45,19 +14,27 @@ router.get('/', async (req, res) => {
     `;
     const [rows] = await db.query(sql);
 
-    const items = rows.map(item => ({
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      imageUrl: item.image_url ? `/uploads/${item.image_url}` : null,
-      status: item.status,
-      createdAt: item.created_at,
-      requester: {
-        id: item.user_id,
-        fullname: item.fullname,
-        email: item.email
+    const items = rows.map(item => {
+      let img = item.image_url;
+      // ถ้ามีรูป และไม่ใช่ Base64 / HTTP URL ให้เติม prefix /uploads/
+      if (img && !img.startsWith('data:') && !img.startsWith('http') && !img.startsWith('/')) {
+        img = `/uploads/${img}`;
       }
-    }));
+
+      return {
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        imageUrl: img,
+        status: item.status,
+        createdAt: item.created_at,
+        requester: {
+          id: item.user_id,
+          fullname: item.fullname,
+          email: item.email
+        }
+      };
+    });
 
     res.json(items);
   } catch (err) {
@@ -66,45 +43,41 @@ router.get('/', async (req, res) => {
   }
 });
 
-// --- 2. โพสต์ตามหา Hardware (รองรับการแนบรูปภาพ) ---
-router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
+// --- 2. โพสต์ตามหา Hardware (รองรับทั้ง Base64 JSON และ File Upload) ---
+router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { title, description } = req.body;
-    const userId = req.user.id;
-    const filename = req.file ? req.file.filename : null;
+    const { title, description, image, imageUrl } = req.body;
+    const userId = req.user.id || req.user.userId;
+
+    // รับค่า Base64 จาก body (image หรือ imageUrl)
+    const finalImage = image || imageUrl || null;
 
     if (!title || title.trim() === '') {
       return res.status(400).json({ error: 'กรุณาระบุชื่ออุปกรณ์ที่ต้องการ' });
     }
 
     const sql = `
-      INSERT INTO wanted_items (title, description, image_url, user_id) 
-      VALUES (?, ?, ?, ?)
+      INSERT INTO wanted_items (title, description, image_url, user_id, status, created_at) 
+      VALUES (?, ?, ?, ?, 'Open', NOW())
     `;
-    const [result] = await db.query(sql, [title.trim(), description || '', filename, userId]);
+    const [result] = await db.query(sql, [title.trim(), description || '', finalImage, userId]);
 
     res.status(201).json({ success: true, insertId: result.insertId });
   } catch (err) {
-    console.error(err);
+    console.error('Create wanted item error:', err);
     res.status(500).json({ error: err.message || 'ไม่สามารถสร้างโพสต์ตามหาได้' });
   }
 });
 
-// --- 3. ลบโพสต์ตามหา (เฉพาะเจ้าของโพสต์) ---
+// --- 3. ลบโพสต์ตามหา ---
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const itemId = req.params.id;
-    const userId = req.user.id;
+    const userId = req.user.id || req.user.userId;
 
-    const [items] = await db.query('SELECT image_url, user_id FROM wanted_items WHERE id = ?', [itemId]);
+    const [items] = await db.query('SELECT user_id FROM wanted_items WHERE id = ?', [itemId]);
     if (items.length === 0) return res.status(404).json({ error: 'ไม่พบรายการนี้' });
     if (items[0].user_id !== userId) return res.status(403).json({ error: 'คุณไม่มีสิทธิ์ลบโพสต์นี้' });
-
-    // ลบไฟล์รูปภาพออกจาก Server (ถ้ามี)
-    if (items[0].image_url) {
-      const filePath = path.join(uploadDir, items[0].image_url);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    }
 
     await db.query('DELETE FROM wanted_items WHERE id = ?', [itemId]);
     res.json({ success: true, message: 'ลบโพสต์ตามหาเรียบร้อยแล้ว' });

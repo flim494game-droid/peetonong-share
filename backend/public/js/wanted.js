@@ -4,12 +4,12 @@ const token = localStorage.getItem('token');
 const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
 // ฟังก์ชันแปลงไฟล์รูปภาพเป็น Base64 String
-function convertFileToBase64(file) {
+function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result);
-    reader.onerror = (error) => reject(error);
+    reader.onerror = error => reject(error);
   });
 }
 
@@ -86,46 +86,41 @@ async function fetchWantedItems() {
   }
 }
 
-// ส่งฟอร์มสร้างโพสต์ตามหา (ป้องกัน Double Click + แปลงไฟล์เป็น Base64)
+// จัดการ Submit ฟอร์มโพสต์ตามหา
 document.getElementById('wantedForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const form = e.target;
-  const submitBtn = form.querySelector('button[type="submit"]') || form.querySelector('button');
+  const token = localStorage.getItem('token');
+  if (!token) {
+    Swal.fire({ icon: 'warning', title: 'กรุณาเข้าสู่ระบบก่อนโพสต์' });
+    return;
+  }
 
-  // 1. ปิดการใช้งานปุ่มทันทีเพื่อป้องกันกดซ้ำ
-  if (submitBtn) {
-    submitBtn.disabled = true;
-    submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-    submitBtn.dataset.originalText = submitBtn.innerText;
-    submitBtn.innerText = 'กำลังโพสต์...';
+  const title = document.getElementById('wantedTitle').value;
+  const description = document.getElementById('wantedDescription').value;
+  const fileInput = document.getElementById('wantedImage');
+
+  let imageBase64 = null;
+  if (fileInput && fileInput.files[0]) {
+    try {
+      imageBase64 = await fileToBase64(fileInput.files[0]);
+    } catch (err) {
+      console.error("Error reading file:", err);
+    }
   }
 
   try {
-    const title = document.getElementById('wantedTitle').value;
-    const description = document.getElementById('wantedDescription').value;
-    const imageFile = document.getElementById('wantedImage').files[0];
-
-    // 2. แปลงไฟล์รูปภาพเป็น Base64 หากมีการเลือกรูปภาพ
-    let base64Image = null;
-    if (imageFile) {
-      base64Image = await convertFileToBase64(imageFile);
-    }
-
-    const payload = {
-      title: title,
-      description: description,
-      imageUrl: base64Image
-    };
-
-    // 3. ส่งข้อมูลในรูปแบบ JSON
     const res = await fetch('/api/wanted', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        title: title,
+        description: description,
+        image: imageBase64
+      })
     });
 
     const data = await res.json();
@@ -133,43 +128,18 @@ document.getElementById('wantedForm')?.addEventListener('submit', async (e) => {
       Swal.fire({
         icon: 'success',
         title: 'โพสต์ตามหาสำเร็จ!',
-        text: 'รายการตามหาของคุณถูกโพสต์ขึ้นบอร์ดเรียบร้อยแล้ว',
         timer: 1500,
-        showConfirmButton: false,
-        customClass: { popup: 'rounded-2xl' }
+        showConfirmButton: false
       }).then(() => {
-        const modal = document.getElementById('postWantedModal');
-        if (modal && typeof modal.close === 'function') {
-          modal.close();
-        }
-        document.getElementById('wantedForm').reset();
-        fetchWantedItems();
+        document.getElementById('postWantedModal').close();
+        location.reload();
       });
     } else {
-      Swal.fire({
-        icon: 'error',
-        title: 'ไม่สามารถโพสต์ได้',
-        text: data.error || 'เกิดข้อผิดพลาดในการโพสต์',
-        confirmButtonColor: '#4f46e5',
-        customClass: { popup: 'rounded-2xl' }
-      });
+      Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: data.error || 'ไม่สามารถบันทึกข้อมูลได้' });
     }
   } catch (err) {
     console.error(err);
-    Swal.fire({
-      icon: 'error',
-      title: 'เกิดข้อผิดพลาด',
-      text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้',
-      confirmButtonColor: '#4f46e5',
-      customClass: { popup: 'rounded-2xl' }
-    });
-  } finally {
-    // 4. คืนค่าปุ่มให้กลับมาใช้งานได้ตามปกติเมื่อเสร็จสิ้น
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-      submitBtn.innerText = submitBtn.dataset.originalText || 'โพสต์';
-    }
+    Swal.fire({ icon: 'error', title: 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' });
   }
 });
 

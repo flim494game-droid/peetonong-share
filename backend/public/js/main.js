@@ -25,7 +25,10 @@ async function fetchItems() {
   
   try {
     const res = await fetch(`/api/items?search=${encodeURIComponent(search)}`);
-    const items = await res.json();
+    const data = await res.json();
+
+    // ดึง Array อุปกรณ์ออกมาอย่างปลอดภัย ไม่ว่าจะส่งมาเป็น Array หรือ { items: [...] }
+    const items = Array.isArray(data) ? data : (data.items || []);
 
     if (!items || items.length === 0) {
       grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500">ไม่พบรายการอุปกรณ์ที่ค้นหา</div>`;
@@ -33,8 +36,11 @@ async function fetchItems() {
     }
 
     grid.innerHTML = items.map(item => {
-      const giverName = item.giver?.name || 'ไม่ระบุชื่อ';
-      const contactInfo = item.giver?.contactInfo || 'ไม่ระบุช่องทางติดต่อ';
+      // ดึงข้อมูลฟิลด์ต่างๆ โดยรองรับทั้ง camelCase และ snake_case จาก DB
+      const courseTag = item.courseTag || item.course_tag || 'ทั่วไป';
+      const condition = item.condition || item.condition_detail || 'ไม่ระบุสภาพ';
+      const giverName = item.giver?.name || item.giver_name || item.owner_name || 'ไม่ระบุชื่อ';
+      const contactInfo = item.giver?.contactInfo || item.giver_name || item.owner_name || 'ไม่ระบุช่องทางติดต่อ';
 
       // จัดการเครื่องหมาย Single Quote ใน String เพื่อไม่ให้เกิด Error ใน onclick
       const safeTitle = item.title.replace(/'/g, "\\'");
@@ -51,9 +57,9 @@ async function fetchItems() {
               <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">${item.category}</span>
             </div>
             <h3 class="font-bold text-lg text-gray-800 mb-1">${item.title}</h3>
-            <p class="text-xs text-indigo-600 font-semibold mb-3">🏷️ ${item.courseTag}</p>
-            <p class="text-sm text-gray-600 mb-2"><strong>สภาพ:</strong> ${item.condition}</p>
-            <p class="text-sm text-gray-500 line-clamp-2">${item.description}</p>
+            <p class="text-xs text-indigo-600 font-semibold mb-3">🏷️ ${courseTag}</p>
+            <p class="text-sm text-gray-600 mb-2"><strong>สภาพ:</strong> ${condition}</p>
+            <p class="text-sm text-gray-500 line-clamp-2">${item.description || ''}</p>
           </div>
           <div class="mt-4 pt-3 border-t text-xs text-gray-500 flex justify-between items-center">
             <span>👤 ${giverName}</span>

@@ -6,7 +6,12 @@ const authMiddleware = require('../middleware/auth');
 // --- 1. POST /api/items : บันทึกประกาศส่งต่ออุปกรณ์ใหม่ ---
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const userId = req.user.id;
+    // ดึง userId อย่างปลอดภัย รองรับทุก key (id, userId, user_id)
+    const userId = req.user ? (req.user.id || req.user.userId || req.user.user_id) : null;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'ไม่พบข้อมูลผู้ใช้ใน Token' });
+    }
+
     const { 
       title, 
       category, 
@@ -22,10 +27,9 @@ router.post('/', authMiddleware, async (req, res) => {
       giver 
     } = req.body;
 
-    // รองรับโครงสร้างตัวแปรทั้ง CamelCase และ snake_case
     const finalCourseTag = courseTag || course_tag || '';
     const finalCondition = condition || condition_detail || '';
-    const finalGiverName = giverName || giver_name || (giver ? giver.name : '');
+    const finalGiverName = giverName || giver_name || (giver ? (giver.name || giver.contactInfo) : '');
     const finalPrice = price || 0;
 
     if (!title || !category || !type) {
@@ -57,19 +61,35 @@ router.post('/', authMiddleware, async (req, res) => {
     });
   } catch (err) {
     console.error('Create item error:', err);
-    res.status(500).json({ success: false, error: 'เกิดข้อผิดพลาดในการบันทึกข้อมูลลงฐานข้อมูล' });
+    // ส่งข้อความ SQL Error ละเอียดเพื่อการตรวจสอบ
+    res.status(500).json({ 
+      success: false, 
+      error: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + (err.sqlMessage || err.message) 
+    });
   }
 });
 
-// --- 2. GET /api/items : ดึงรายการอุปกรณ์ทั้งหมด (สำหรับแสดงหน้าหลัก) ---
+// --- 2. GET /api/items : ดึงรายการอุปกรณ์ทั้งหมด และรองรับการค้นหา (search) ---
 router.get('/', async (req, res) => {
   try {
-    const [items] = await db.query(`
+    const { search } = req.query;
+    let sql = `
       SELECT items.*, users.fullname as owner_name 
       FROM items 
       LEFT JOIN users ON items.user_id = users.id 
-      ORDER BY items.created_at DESC
-    `);
+    `;
+    const params = [];
+
+    // เพิ่มเงื่อนไขค้นหาเมื่อมีคำค้นส่งมาจาก Frontend
+    if (search && search.trim() !== '') {
+      sql += ` WHERE items.title LIKE ? OR items.course_tag LIKE ? OR items.category LIKE ? `;
+      const searchTerm = `%${search.trim()}%`;
+      params.push(searchTerm, searchTerm, searchTerm);
+    }
+
+    sql += ` ORDER BY items.created_at DESC`;
+
+    const [items] = await db.query(sql, params);
     
     res.json({ success: true, items });
   } catch (err) {

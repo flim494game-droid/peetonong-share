@@ -1,0 +1,42 @@
+services:
+  # 1. Database MySQL
+  mysql_db:
+    image: mysql:8.0
+    container_name: peetonong_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: peetonong_share
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  # 2. Backend Express API
+  backend_api:
+    build: ./backend
+    container_name: peetonong_backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DB_HOST: mysql_db
+      DB_USER: root
+      DB_PASSWORD: rootpassword
+      DB_NAME: peetonong_share
+    depends_on:
+      - mysql_db
+
+  # 3. Frontend Angular
+  frontend_app:
+    build: ./frontend
+    container_name: peetonong_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend_api
+
+volumes:
+  db_data:

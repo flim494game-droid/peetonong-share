@@ -1,0 +1,60 @@
+<div style="font-family: Arial, sans-serif; background-color: #111827; color: white; min-height: 100vh; padding: 24px;">
+  <h1 style="color: #818cf8; text-align: center; margin-bottom: 24px;">🏥 Smart Health Monitoring Dashboard</h1>
+
+  <!-- Top Metric Cards -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+    <div style="background: #1f2937; padding: 20px; border-radius: 12px; border: 1px solid #374151; text-align: center;">
+      <p style="color: #9ca3af; margin: 0; font-size: 14px;">อุณหภูมิร่างกาย</p>
+      <h2 style="color: #fbbf24; font-size: 2.5rem; margin: 10px 0;">{{ liveData.tempC || 0 }} °C</h2>
+      <small style="color: #6b7280;">DS18B20</small>
+    </div>
+
+    <div style="background: #1f2937; padding: 20px; border-radius: 12px; border: 1px solid #374151; text-align: center;">
+      <p style="color: #9ca3af; margin: 0; font-size: 14px;">อัตราการเต้นหัวใจ</p>
+      <h2 style="color: #ef4444; font-size: 2.5rem; margin: 10px 0;">{{ liveData.bpm || 0 }} <span style="font-size: 1rem;">BPM</span></h2>
+      <small style="color: #6b7280;">MAX30102</small>
+    </div>
+
+    <div style="background: #1f2937; padding: 20px; border-radius: 12px; border: 1px solid #374151; text-align: center;">
+      <p style="color: #9ca3af; margin: 0; font-size: 14px;">ออกซิเจนในเลือด</p>
+      <h2 style="color: #3b82f6; font-size: 2.5rem; margin: 10px 0;">{{ liveData.spo2 || 0 }} %</h2>
+      <small style="color: #6b7280;">MAX30102</small>
+    </div>
+
+    <div style="background: #1f2937; padding: 20px; border-radius: 12px; border: 1px solid #374151; text-align: center;">
+      <p style="color: #9ca3af; margin: 0; font-size: 14px;">ผลประมวลผล AI (TinyML)</p>
+      <h3 style="color: #34d399; margin-top: 15px;">{{ liveData.diseaseName || 'รอข้อมูล...' }}</h3>
+    </div>
+  </div>
+
+  <!-- Real-time Chart -->
+  <div style="background: #1f2937; padding: 20px; border-radius: 12px; border: 1px solid #374151; margin-top: 24px;">
+    <h3 style="margin-top: 0;">📈 แนวโน้มชีพจรและออกซิเจน Real-time</h3>
+    <canvas baseChart [data]="lineChartData" [options]="lineChartOptions" [type]="'line'"></canvas>
+  </div>
+
+  <!-- History Table -->
+  <div style="background: #1f2937; padding: 20px; border-radius: 12px; border: 1px solid #374151; margin-top: 24px; overflow-x: auto;">
+    <h3 style="margin-top: 0;">📜 ประวัติการตรวจวัดล่าสุด</h3>
+    <table style="width: 100%; text-align: left; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 2px solid #374151; color: #9ca3af;">
+          <th style="padding: 12px;">เวลา (วินาที)</th>
+          <th style="padding: 12px;">อุณหภูมิ (°C)</th>
+          <th style="padding: 12px;">BPM</th>
+          <th style="padding: 12px;">SpO2 (%)</th>
+          <th style="padding: 12px;">ผลวิเคราะห์ AI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let log of logs.slice(-10).reverse()" style="border-bottom: 1px solid #374151;">
+          <td style="padding: 12px;">{{ log.timestamp }}s</td>
+          <td style="padding: 12px;">{{ log.tempC }}</td>
+          <td style="padding: 12px; color: #ef4444; font-weight: bold;">{{ log.bpm }}</td>
+          <td style="padding: 12px; color: #3b82f6; font-weight: bold;">{{ log.spo2 }}</td>
+          <td style="padding: 12px;">{{ log.diseaseName }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,144 @@
+<!-- Admin Header -->
+<header class="bg-gray-900 text-white shadow-md">
+  <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <span class="text-2xl">⚡</span>
+      <h1 class="text-xl font-bold">ระบบจัดการผู้ดูแลระบบ (Admin Dashboard)</h1>
+    </div>
+    <a routerLink="/wanted" class="text-sm bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg border border-gray-700 transition">
+      ← กลับหน้าหลัก
+    </a>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 py-8">
+
+  <!-- Overview Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+      <div>
+        <p class="text-sm font-semibold text-gray-500">สมาชิกในระบบทั้งหมด</p>
+        <p class="text-3xl font-extrabold text-gray-800 mt-1">{{ stats.usersCount }} คน</p>
+      </div>
+      <div class="text-3xl p-3 bg-indigo-50 text-indigo-600 rounded-xl">👥</div>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+      <div>
+        <p class="text-sm font-semibold text-gray-500">ของบริจาคในระบบ</p>
+        <p class="text-3xl font-extrabold text-emerald-600 mt-1">{{ stats.itemsCount }} ชิ้น</p>
+      </div>
+      <div class="text-3xl p-3 bg-emerald-50 text-emerald-600 rounded-xl">🎁</div>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+      <div>
+        <p class="text-sm font-semibold text-gray-500">โพสต์ตามหาทั้งหมด</p>
+        <p class="text-3xl font-extrabold text-amber-600 mt-1">{{ stats.wantedCount }} โพสต์</p>
+      </div>
+      <div class="text-3xl p-3 bg-amber-50 text-amber-600 rounded-xl">🔍</div>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="flex border-b border-gray-200 mb-6 gap-2">
+    <button (click)="activeTab = 'items'" 
+            [ngClass]="activeTab === 'items' ? 'border-indigo-600 text-indigo-600 font-bold' : 'border-transparent text-gray-500'" 
+            class="pb-3 px-4 border-b-2 text-sm transition">
+      📦 ของบริจาค ({{ items.length }})
+    </button>
+    <button (click)="activeTab = 'wanted'" 
+            [ngClass]="activeTab === 'wanted' ? 'border-indigo-600 text-indigo-600 font-bold' : 'border-transparent text-gray-500'" 
+            class="pb-3 px-4 border-b-2 text-sm transition">
+      🔍 โพสต์ตามหา ({{ wantedItems.length }})
+    </button>
+    <button (click)="activeTab = 'users'" 
+            [ngClass]="activeTab === 'users' ? 'border-indigo-600 text-indigo-600 font-bold' : 'border-transparent text-gray-500'" 
+            class="pb-3 px-4 border-b-2 text-sm transition">
+      👥 สมาชิก ({{ users.length }})
+    </button>
+  </div>
+
+  <!-- Table Content -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+    
+    <!-- Tab 1: Items Table -->
+    <table *ngIf="activeTab === 'items'" class="w-full text-left text-sm text-gray-600">
+      <thead class="bg-gray-50 text-gray-700 font-semibold border-b">
+        <tr>
+          <th class="p-4">รูป</th>
+          <th class="p-4">ชื่อสิ่งของ</th>
+          <th class="p-4">หมวดหมู่</th>
+          <th class="p-4">ผู้บริจาค</th>
+          <th class="p-4 text-center">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr *ngFor="let item of items" class="hover:bg-gray-50">
+          <td class="p-4">
+            <img [src]="item.image_url || 'https://via.placeholder.com/50'" class="w-12 h-12 object-cover rounded-lg bg-gray-100">
+          </td>
+          <td class="p-4 font-semibold text-gray-800">{{ item.name }}</td>
+          <td class="p-4"><span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">{{ item.category }}</span></td>
+          <td class="p-4">{{ item.donor_name || 'ไม่ระบุ' }}</td>
+          <td class="p-4 text-center">
+            <button (click)="deleteItem(item.id)" class="text-red-600 hover:text-red-800 font-semibold px-3 py-1 rounded bg-red-50 hover:bg-red-100">
+              ลบ
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Tab 2: Wanted Items Table -->
+    <table *ngIf="activeTab === 'wanted'" class="w-full text-left text-sm text-gray-600">
+      <thead class="bg-gray-50 text-gray-700 font-semibold border-b">
+        <tr>
+          <th class="p-4">รูปตัวอย่าง</th>
+          <th class="p-4">หัวข้อตามหา</th>
+          <th class="p-4">ผู้โพสต์</th>
+          <th class="p-4 text-center">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr *ngFor="let item of wantedItems" class="hover:bg-gray-50">
+          <td class="p-4">
+            <img [src]="item.imageUrl || 'https://via.placeholder.com/50'" class="w-12 h-12 object-cover rounded-lg bg-gray-100">
+          </td>
+          <td class="p-4 font-semibold text-gray-800">{{ item.title }}</td>
+          <td class="p-4">{{ item.requester?.fullname || 'ผู้ใช้งาน' }}</td>
+          <td class="p-4 text-center">
+            <button (click)="deleteWanted(item.id)" class="text-red-600 hover:text-red-800 font-semibold px-3 py-1 rounded bg-red-50 hover:bg-red-100">
+              ลบ
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Tab 3: Users Table -->
+    <table *ngIf="activeTab === 'users'" class="w-full text-left text-sm text-gray-600">
+      <thead class="bg-gray-50 text-gray-700 font-semibold border-b">
+        <tr>
+          <th class="p-4">ชื่อ - นามสกุล</th>
+          <th class="p-4">อีเมล</th>
+          <th class="p-4">วันที่สมัคร</th>
+          <th class="p-4 text-center">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr *ngFor="let u of users" class="hover:bg-gray-50">
+          <td class="p-4 font-semibold text-gray-800">{{ u.fullname }}</td>
+          <td class="p-4 text-indigo-600">{{ u.email }}</td>
+          <td class="p-4 text-xs text-gray-500">{{ u.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td class="p-4 text-center">
+            <button (click)="deleteUser(u.id)" class="text-red-600 hover:text-red-800 font-semibold px-3 py-1 rounded bg-red-50 hover:bg-red-100">
+              ลบ
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+</main>

@@ -1,23 +1,22 @@
-// public/js/wanted.js
+const jwt = require('jsonwebtoken');
 
-// ฟังก์ชันสำหรับจัดการเมื่อไม่ได้ล็อกอินหรือ Session หมดอายุ (401 / 403)
-function handleAuthError(res) {
-  if (res.status === 401 || res.status === 403) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+module.exports = (req, res, next) => {
+  // ดึง Token จาก Request Header (Authorization: Bearer <token>)
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
 
-    Swal.fire({
-      icon: 'warning',
-      title: 'กรุณาเข้าสู่ระบบ',
-      text: 'Session ของคุณหมดอายุหรือยังไม่ได้เข้าสู่ระบบ',
-      confirmButtonText: 'ตกลง',
-      confirmButtonColor: '#4f46e5',
-      allowOutsideClick: false,
-      customClass: { popup: 'rounded-2xl' }
-    }).then(() => {
-      window.location.href = 'login.html';
-    });
-    return true; // เกิด Error จากการ Auth
+  // ถ้าไม่มี Token ส่งมา ให้ตอบกลับ HTTP 401
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Access denied. No token provided.' });
   }
-  return false;
+
+  try {
+    // ยืนยันความถูกต้องของ Token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_secret_key');
+    req.user = decoded;
+    next(); // ผ่านการตรวจสอบ ให้ไปทำงานที่ Route Handler ต่อได้
+  } catch (err) {
+    // ถ้า Token ไม่ถูกต้องหรือหมดอายุ ให้ตอบกลับ HTTP 403
+    return res.status(403).json({ success: false, message: 'Invalid or expired token.' });
+  }
 };

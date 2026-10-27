@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user'); 
 const authMiddleware = require('./middleware/auth');
 const wantedRoutes = require('./routes/wanted');
+const itemRoutes = require('./routes/item'); // หรือ './routes/items' ตามชื่อไฟล์ของคุณ
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,6 +24,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/wanted', wantedRoutes);
+app.use('/api/items', itemRoutes);
 
 // API ดึงรายการทั้งหมด
 app.get('/api/items', async (req, res) => {

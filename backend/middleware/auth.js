@@ -20,30 +20,4 @@ function handleAuthError(res) {
     return true; // เกิด Error จากการ Auth
   }
   return false;
-}
-
-// ตัวอย่างการนำไปใช้ในฟังก์ชันสร้างโพสต์ตามหา
-document.getElementById('wantedForm')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  try {
-    const res = await fetch('/api/wanted', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
-    });
-
-    // ตรวจสอบหากเกิด 401 / 403 ให้ส่งไปหน้า Login
-    if (handleAuthError(res)) return;
-
-    const data = await res.json();
-    if (res.ok && data.success) {
-      // ทำงานเมื่อสำเร็จ...
-    }
-  } catch (err) {
-    console.error(err);
-  }
-});
+};
